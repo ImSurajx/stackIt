@@ -36,6 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.setItem('stackit_users', JSON.stringify(dummyUsers));
             localStorage.setItem('stackit_questions', JSON.stringify(dummyQuestions));
             localStorage.setItem('stackit_answers', JSON.stringify(dummyAnswers));
+            localStorage.setItem('stackit_blockedUsers', JSON.stringify([]));
         }
     };
     
@@ -78,6 +79,7 @@ document.addEventListener('DOMContentLoaded', () => {
         votes: JSON.parse(localStorage.getItem('stackit_votes')) || [],
         questionVotes: JSON.parse(localStorage.getItem('stackit_questionVotes')) || [],
         notifications: JSON.parse(localStorage.getItem('stackit_notifications')) || [],
+        blockedUsers: JSON.parse(localStorage.getItem('stackit_blockedUsers')) || [],
         currentUser: JSON.parse(sessionStorage.getItem('stackit_currentUser')) || null
     };
 
@@ -143,7 +145,9 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>`,
         detail: (args) => {
             const [q, ans] = args;
+            const isAdmin = db.currentUser && db.currentUser.username === 'admin';
             const isAuthor = db.currentUser && db.currentUser.username === q.author;
+            const showDeleteButton = isAdmin || isAuthor;
             const truncatedTitle = q.title.length > 40 ? q.title.substring(0, 40) + '...' : q.title;
 
             return `
@@ -165,11 +169,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="flex-1">
                         <div class="flex justify-between items-start">
                             <h1 class="text-2xl sm:text-3xl font-bold mb-2">${q.title}</h1>
-                            ${isAuthor ? `<button id="delete-question-btn" data-question-id="${q.id}" class="p-2 rounded-full hover:bg-red-500/10 text-red-500" title="Delete Question"><svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>` : ''}
+                            ${showDeleteButton ? `<button id="delete-question-btn" data-question-id="${q.id}" class="p-2 rounded-full hover:bg-red-500/10 text-red-500" title="Delete Question"><svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>` : ''}
                         </div>
                         <div class="flex flex-col sm:flex-row items-start sm:items-center gap-1 sm:gap-4 mb-4 text-sm" style="color: var(--text-secondary);">
                             <span>Asked ${formatTimeAgo(q.createdAt)}</span>
-                            <span>by ${q.author}</span>
+                            <div class="flex items-center">
+                                <span>by ${q.author}</span>
+                                ${isAdmin && q.author !== 'admin' && !db.blockedUsers.includes(q.author) ? `<button class="block-user-btn text-xs text-red-500 ml-2 p-1 rounded hover:bg-red-100" data-username="${q.author}">[Block]</button>` : ''}
+                                ${db.blockedUsers.includes(q.author) ? '<span class="text-xs text-red-500 font-bold ml-2">[BLOCKED]</span>' : ''}
+                            </div>
                         </div>
                         <div class="flex flex-wrap items-center gap-2 mb-4">${q.tags.map(t => `<span class="tag-item px-2.5 py-1 rounded-full text-xs font-medium">${t}</span>`).join('')}</div>
                         <div class="prose dark:prose-invert max-w-none mb-8" style="color: var(--text-primary);">${q.description}</div>
@@ -210,9 +218,10 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const answerTemplate = (answer, question) => {
+        const isAdmin = db.currentUser && db.currentUser.username === 'admin';
         const vote = db.currentUser ? db.votes.find(v => v.userId === db.currentUser.id && v.answerId === answer.id) : null;
         const isAuthor = db.currentUser && db.currentUser.username === question.author;
-        return `<div class="flex flex-col sm:flex-row gap-4"><div class="flex flex-row sm:flex-col items-center gap-2 sm:gap-1" style="color: var(--text-secondary);"><button class="vote-btn p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-transform hover:scale-110 ${vote?.type === 'up' ? 'voted-up' : ''}" data-vote="up" data-answer-id="${answer.id}">▲</button><span class="font-bold text-lg">${answer.votes}</span><button class="vote-btn p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-transform hover:scale-110 ${vote?.type === 'down' ? 'voted-down' : ''}" data-vote="down" data-answer-id="${answer.id}">▼</button>${isAuthor ? `<button class="accept-btn text-gray-400 hover:text-green-500 transition-transform hover:scale-110 ${question.acceptedAnswerId === answer.id ? 'accepted' : ''}" data-accept-id="${answer.id}" data-question-id="${question.id}">✔</button>` : (question.acceptedAnswerId === answer.id ? '<span class="text-green-500">✔</span>' : '')}</div><div class="flex-1"><div class="prose dark:prose-invert max-w-none">${answer.content}</div><div class="text-sm mt-2" style="color: var(--text-secondary);">answered ${formatTimeAgo(answer.createdAt)} by ${answer.author}</div></div></div>`;
+        return `<div class="flex flex-col sm:flex-row gap-4"><div class="flex flex-row sm:flex-col items-center gap-2 sm:gap-1" style="color: var(--text-secondary);"><button class="vote-btn p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-transform hover:scale-110 ${vote?.type === 'up' ? 'voted-up' : ''}" data-vote="up" data-answer-id="${answer.id}">▲</button><span class="font-bold text-lg">${answer.votes}</span><button class="vote-btn p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-transform hover:scale-110 ${vote?.type === 'down' ? 'voted-down' : ''}" data-vote="down" data-answer-id="${answer.id}">▼</button>${isAuthor ? `<button class="accept-btn text-gray-400 hover:text-green-500 transition-transform hover:scale-110 ${question.acceptedAnswerId === answer.id ? 'accepted' : ''}" data-accept-id="${answer.id}" data-question-id="${question.id}">✔</button>` : (question.acceptedAnswerId === answer.id ? '<span class="text-green-500">✔</span>' : '')}</div><div class="flex-1"><div class="prose dark:prose-invert max-w-none">${answer.content}</div><div class="text-sm mt-2 flex items-center" style="color: var(--text-secondary);">answered ${formatTimeAgo(answer.createdAt)} by ${answer.author} ${isAdmin && answer.author !== 'admin' && !db.blockedUsers.includes(answer.author) ? `<button class="block-user-btn text-xs text-red-500 ml-2 p-1 rounded hover:bg-red-100" data-username="${answer.author}">[Block]</button>` : ''} ${db.blockedUsers.includes(answer.author) ? '<span class="text-xs text-red-500 font-bold ml-2">[BLOCKED]</span>' : ''}</div></div></div>`;
     };
     
     // =================================================================================
@@ -566,6 +575,10 @@ document.addEventListener('DOMContentLoaded', () => {
             );
 
             if (user) {
+                if (db.blockedUsers.includes(user.username)) {
+                    showAlert('This account has been blocked.');
+                    return;
+                }
                 db.currentUser = user;
                 sessionStorage.setItem('stackit_currentUser', JSON.stringify(user));
                 updateUI();
@@ -676,6 +689,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const initDetailPage = (question, answers) => {
+        const detailPageContainer = document.getElementById('page-detail');
         const answerContainer = document.getElementById('answer-form-container');
         if (db.currentUser) {
             answerContainer.innerHTML = `<h3 class="text-xl font-bold mb-4">Your Answer</h3><form id="answer-form"><div id="answer-editor-container"></div><button type="submit" class="mt-4 text-white px-6 py-2 rounded-lg font-semibold transition-transform hover:scale-105" style="background-color: var(--accent-color); color: var(--accent-text);">Post Answer</button></form>`;
@@ -692,26 +706,35 @@ document.addEventListener('DOMContentLoaded', () => {
             answerContainer.innerHTML = `<p>Please <a href="#" class="font-semibold nav-link" data-page="login" style="color: var(--accent-color);">login</a> to post an answer.</p>`;
         }
 
-        document.getElementById('answer-list').addEventListener('click', e => {
-            const btn = e.target.closest('button');
-            if (!btn || !db.currentUser) { if(btn) showAlert('Please login to vote or accept answers.'); return; };
-            const answerId = parseInt(btn.dataset.acceptId || btn.dataset.answerId);
-            if (!answerId) return;
-            const answer = db.answers.find(a => a.id === answerId);
-            if (btn.dataset.vote) {
+        detailPageContainer.addEventListener('click', e => {
+            const voteBtn = e.target.closest('.vote-btn');
+            const acceptBtn = e.target.closest('.accept-btn');
+            const deleteBtn = e.target.closest('#delete-question-btn');
+            const blockBtn = e.target.closest('.block-user-btn');
+
+            if (voteBtn) {
+                if (!db.currentUser) { showAlert('Please login to vote or accept answers.'); return; }
+                const answerId = parseInt(voteBtn.dataset.answerId);
+                if (!answerId) return;
+                const answer = db.answers.find(a => a.id === answerId);
                 const existingVote = db.votes.find(v => v.userId === db.currentUser.id && v.answerId === answerId);
                 if (existingVote) { answer.votes -= (existingVote.type === 'up' ? 1 : -1); db.votes = db.votes.filter(v => v.id !== existingVote.id); }
-                if (!existingVote || existingVote.type !== btn.dataset.vote) { answer.votes += (btn.dataset.vote === 'up' ? 1 : -1); db.votes.push({ id: Date.now(), userId: db.currentUser.id, answerId, type: btn.dataset.vote }); }
+                if (!existingVote || existingVote.type !== voteBtn.dataset.vote) { answer.votes += (voteBtn.dataset.vote === 'up' ? 1 : -1); db.votes.push({ id: Date.now(), userId: db.currentUser.id, answerId, type: voteBtn.dataset.vote }); }
+                saveDb();
+                showPage('detail', [db.questions.find(q=>q.id===question.id), db.answers.filter(a => a.questionId === question.id)]);
             }
-            if (btn.dataset.acceptId) { const q = db.questions.find(q => q.id === parseInt(btn.dataset.questionId)); if (q.author === db.currentUser.username) { q.acceptedAnswerId = q.acceptedAnswerId === answerId ? null : answerId; } }
-            saveDb();
-            showPage('detail', [db.questions.find(q=>q.id===question.id), db.answers.filter(a => a.questionId === question.id)]);
-        });
 
-        const deleteBtn = document.getElementById('delete-question-btn');
-        if (deleteBtn) {
-            deleteBtn.addEventListener('click', (e) => {
-                const questionId = parseInt(e.currentTarget.dataset.questionId);
+            if (acceptBtn) {
+                if (!db.currentUser) { showAlert('Please login to vote or accept answers.'); return; }
+                const answerId = parseInt(acceptBtn.dataset.acceptId);
+                const q = db.questions.find(q => q.id === parseInt(acceptBtn.dataset.questionId));
+                if (q.author === db.currentUser.username) { q.acceptedAnswerId = q.acceptedAnswerId === answerId ? null : answerId; }
+                saveDb();
+                showPage('detail', [db.questions.find(q=>q.id===question.id), db.answers.filter(a => a.questionId === question.id)]);
+            }
+
+            if (deleteBtn) {
+                const questionId = parseInt(deleteBtn.dataset.questionId);
                 showConfirm("Are you sure you want to delete this question? This will also delete all its answers and cannot be undone.", () => {
                     const answersToDelete = db.answers.filter(a => a.questionId === questionId);
                     const answerIds = answersToDelete.map(a => a.id);
@@ -724,8 +747,20 @@ document.addEventListener('DOMContentLoaded', () => {
                     showAlert('Question deleted successfully.');
                     showPage('home');
                 });
-            });
-        }
+            }
+
+            if (blockBtn) {
+                const usernameToBlock = blockBtn.dataset.username;
+                showConfirm(`Are you sure you want to block "${usernameToBlock}"? They will no longer be able to log in.`, () => {
+                    if (!db.blockedUsers.includes(usernameToBlock)) {
+                        db.blockedUsers.push(usernameToBlock);
+                        saveDb();
+                        showAlert(`User "${usernameToBlock}" has been blocked.`);
+                        showPage('detail', [db.questions.find(q => q.id === question.id), db.answers.filter(a => a.questionId === question.id)]);
+                    }
+                });
+            }
+        });
     };
 
     // =================================================================================
