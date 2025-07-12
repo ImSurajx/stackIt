@@ -300,4 +300,41 @@ document.addEventListener("DOMContentLoaded", () => {
     showPage("home");
   };
 
+  // =================================================================================
+  // MODAL & ALERT
+  // =================================================================================
+  const alertModal = document.getElementById("alert-modal");
+  const confirmModal = document.getElementById("confirm-modal");
+  const showAlert = (message) => {
+    document.getElementById("alert-message").textContent = message;
+    alertModal.classList.add("active");
+  };
+  const showConfirm = (message, onConfirm) => {
+    document.getElementById("confirm-message").textContent = message;
+    confirmModal.classList.add("active");
+
+    const confirmBtn = document.getElementById("confirm-ok-btn");
+    const cancelBtn = document.getElementById("confirm-cancel-btn");
+
+    const confirmHandler = () => {
+      onConfirm();
+      closeConfirm();
+    };
+
+    const cancelHandler = () => {
+      closeConfirm();
+    };
+
+    const closeConfirm = () => {
+      confirmModal.classList.remove("active");
+      confirmBtn.removeEventListener("click", confirmHandler);
+      cancelBtn.removeEventListener("click", cancelHandler);
+    };
+
+    confirmBtn.addEventListener("click", confirmHandler);
+    cancelBtn.addEventListener("click", cancelHandler);
+  };
+  alertModal.addEventListener("click", () =>
+    alertModal.classList.remove("active")
+  );
 });
