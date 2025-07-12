@@ -847,4 +847,103 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     }
   };
+
+  // =================================================================================
+  // NOTIFICATIONS
+  // =================================================================================
+  const initNotifications = () => {
+    const container = document.getElementById("notification-container");
+    if (!container) return;
+    container.innerHTML = `<button id="notification-bell" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"><svg class="w-5 h-5 sm:w-6 sm:h-6" style="color: var(--text-secondary);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg><span id="notification-badge" class="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500 ring-2 ring-white" style="display: none;"></span></button><div id="notification-dropdown" class="absolute right-0 mt-2 w-80 rounded-lg shadow-lg border p-2 hidden" style="background-color: var(--bg-secondary); border-color: var(--border-color);"></div>`;
+    const bell = document.getElementById("notification-bell"),
+      badge = document.getElementById("notification-badge"),
+      dropdown = document.getElementById("notification-dropdown");
+    const userNotifications = db.notifications.filter(
+      (n) => n.targetUser === db.currentUser.username
+    );
+
+    const renderNots = () => {
+      const unreadCount = userNotifications.filter((n) => !n.read).length;
+      badge.style.display = unreadCount > 0 ? "block" : "none";
+      dropdown.innerHTML =
+        userNotifications.length > 0
+          ? userNotifications
+              .map(
+                (n) => `
+                    <div class="notification-item p-2 border-b cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 ${
+                      n.read
+                        ? "font-normal text-gray-400 dark:text-gray-500"
+                        : "font-semibold"
+                    }" style="border-color: var(--border-color);" data-id="${
+                  n.id
+                }" data-type="${n.type}" data-ref-id="${n.referenceId}">
+                        ${n.text}
+                    </div>
+                `
+              )
+              .join("")
+          : '<p class="text-sm p-2" style="color: var(--text-secondary);">No notifications.</p>';
+    };
+
+    bell.addEventListener("click", (e) => {
+      e.stopPropagation();
+      dropdown.classList.toggle("hidden");
+    });
+
+    dropdown.addEventListener("click", (e) => {
+      const item = e.target.closest(".notification-item");
+      if (!item) return;
+
+      const notificationId = parseInt(item.dataset.id);
+      const notification = db.notifications.find(
+        (n) => n.id === notificationId
+      );
+
+      if (notification && !notification.read) {
+        notification.read = true;
+        saveDb();
+        renderNots();
+      }
+
+      const type = item.dataset.type;
+      const refId = parseInt(item.dataset.refId);
+
+      if (type === "new_answer") {
+        const question = db.questions.find((q) => q.id === refId);
+        if (question) {
+          const answers = db.answers.filter(
+            (a) => a.questionId === question.id
+          );
+          showPage("detail", [question, answers]);
+          dropdown.classList.add("hidden");
+        }
+      }
+    });
+
+    document.addEventListener("click", (e) => {
+      if (!dropdown.contains(e.target) && !bell.contains(e.target)) {
+        dropdown.classList.add("hidden");
+      }
+    });
+
+    renderNots();
+  };
+
+  const addNotification = (text, targetUser, type, referenceId) => {
+    if (db.currentUser && db.currentUser.username === targetUser) return;
+    db.notifications.unshift({
+      id: Date.now(),
+      text,
+      targetUser,
+      type,
+      referenceId,
+      read: false,
+      createdAt: new Date().toISOString(),
+    });
+    saveDb();
+  };
+
+  // --- INITIAL LOAD ---
+  updateUI();
+  handleInitialLoad();
 });
