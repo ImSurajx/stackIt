@@ -103,7 +103,7 @@ This project was created as part of a hackathon. You’re welcome to fork, explo
 
 ## 📬 Author Info
 
-**Created by:** The Quantum Quacks
+**Created by:** The Quantum Quacks<br>
 **Hackathon:** Odoo Hackathon 2025  
 **GitHub:** [@ImSurajx](https://github.com/ImSurajx)
 
