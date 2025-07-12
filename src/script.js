@@ -30,5 +30,33 @@ document.addEventListener("DOMContentLoaded", () => {
     applyTheme(currentTheme);
   });
 
-  
+  // =================================================================================
+  // DATABASE & STATE
+  // =================================================================================
+  let db = {
+    users: JSON.parse(localStorage.getItem("stackit_users")) || [
+      {
+        id: 1,
+        name: "Admin",
+        username: "admin",
+        contact: "admin@example.com",
+        password: "Password123!",
+      },
+    ],
+    questions: JSON.parse(localStorage.getItem("stackit_questions")) || [],
+    answers: JSON.parse(localStorage.getItem("stackit_answers")) || [],
+    votes: JSON.parse(localStorage.getItem("stackit_votes")) || [],
+    questionVotes:
+      JSON.parse(localStorage.getItem("stackit_questionVotes")) || [],
+    notifications:
+      JSON.parse(localStorage.getItem("stackit_notifications")) || [],
+    currentUser:
+      JSON.parse(sessionStorage.getItem("stackit_currentUser")) || null,
+  };
+
+  const saveDb = () =>
+    Object.keys(db).forEach((key) => {
+      if (key !== "currentUser")
+        localStorage.setItem(`stackit_${key}`, JSON.stringify(db[key]));
+    });
 });
