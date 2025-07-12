@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en" class="">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StackIt - Q&A Platform</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Quill.js Rich Text Editor -->
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+    <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+
+    <link rel="stylesheet" href="./src/style.css">
+</head>
+<body>
+
+    <!-- HEADER -->
+    <header class="backdrop-blur-lg border-b sticky top-0 z-50" style="background-color: var(--bg-secondary); border-color: var(--border-color);">
+        <div class="container mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center gap-2 sm:gap-4">
+                    <a href="#" class="text-xl sm:text-2xl font-bold nav-link" data-page="home">Stack<span style="color: var(--accent-color);">It</span></a>
+                    <div class="hidden sm:flex items-center space-x-1">
+                        <button id="back-btn" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" title="Back">
+                            <svg class="w-5 h-5" style="color: var(--text-secondary);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                        </button>
+                        <button id="forward-btn" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" title="Forward">
+                            <svg class="w-5 h-5" style="color: var(--text-secondary);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                        </button>
+                    </div>
+                </div>
+                <div id="auth-container" class="flex items-center space-x-2 sm:space-x-4">
+                    <!-- This will be filled by JS based on login state -->
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-4 sm:py-8">
+        <!-- PAGES -->
+        <div id="page-home" class="page active"></div>
+        <div id="page-ask" class="page"></div>
+        <div id="page-detail" class="page"></div>
+        <div id="page-login" class="page"></div>
+        <div id="page-signup" class="page"></div>
+    </main>
+
+    <!-- MODALS -->
+    <div id="alert-modal" class="modal fixed inset-0 bg-black bg-opacity-50 items-center justify-center z-50 p-4">
+        <div class="modal-content p-6 sm:p-8 rounded-lg shadow-xl w-full max-w-sm text-center" style="background-color: var(--bg-secondary);">
+            <p id="alert-message" class="mb-4"></p>
+            <button type="button" class="modal-close px-4 py-2 rounded transition-transform hover:scale-105" style="background-color: var(--accent-color); color: var(--accent-text);">OK</button>
+        </div>
+    </div>
+    <div id="confirm-modal" class="modal fixed inset-0 bg-black bg-opacity-50 items-center justify-center z-50 p-4">
+        <div class="modal-content p-6 sm:p-8 rounded-lg shadow-xl w-full max-w-sm text-center" style="background-color: var(--bg-secondary);">
+            <p id="confirm-message" class="mb-6"></p>
+            <div class="flex justify-center gap-4">
+                <button type="button" id="confirm-cancel-btn" class="px-4 py-2 rounded transition-transform hover:scale-105" style="background-color: var(--text-secondary); color: var(--bg-primary);">Cancel</button>
+                <button type="button" id="confirm-ok-btn" class="text-white px-4 py-2 rounded transition-transform hover:scale-105 bg-red-600">Delete</button>
+            </div>
+        </div>
+    </div>
+    <script src="./src/script.js"></script>
+</body>
+</html>
