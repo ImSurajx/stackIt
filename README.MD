@@ -95,6 +95,21 @@ cd stackit
 
 ---
 
+## 🧪 Test Credentials
+
+Use the following test accounts to explore the platform features:
+
+| Username | Email              | Password       | Role     |
+|----------|--------------------|----------------|----------|
+| **alice**   | alice@example.com   | `alice123`     | Regular User |
+| **bob**     | bob@example.com     | `bob456`       | Regular User |
+| **charlie** | charlie@example.com | `charlie789`   | Regular User |
+| **admin**   | admin@example.com   | `Password123!` | Admin |
+
+> These are for **demo and testing purposes only** (no real authentication backend).
+
+---
+
 ## 🤝 Contribution
 
 This project was created as part of a hackathon. You’re welcome to fork, explore, or adapt it.

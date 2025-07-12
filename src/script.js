@@ -1,5 +1,129 @@
 document.addEventListener("DOMContentLoaded", () => {
   // =================================================================================
+  // DUMMY DATA INITIALIZATION
+  // =================================================================================
+  const initDummyData = () => {
+    const dummyUsers = [
+      {
+        id: 1,
+        name: "Admin",
+        username: "admin",
+        contact: "admin@example.com",
+        password: "Password123!",
+      },
+      {
+        id: 2,
+        name: "Alice",
+        username: "alice",
+        contact: "alice@example.com",
+        password: "alice123",
+      },
+      {
+        id: 3,
+        name: "Bob",
+        username: "bob",
+        contact: "bob@example.com",
+        password: "bob456",
+      },
+      {
+        id: 4,
+        name: "Charlie",
+        username: "charlie",
+        contact: "charlie@example.com",
+        password: "charlie789",
+      },
+    ];
+
+    const dummyQuestions = [
+      {
+        id: 101,
+        title: "How to manage state in a large React application?",
+        description:
+          "<p>I'm building a complex app with many components that need to share state. Prop drilling is becoming a nightmare. What are the best practices for state management? I've heard of Redux and Context API, but I'm not sure which one to choose.</p>",
+        tags: ["react", "state-management", "javascript"],
+        author: "alice",
+        votes: 15,
+        createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+        acceptedAnswerId: 202,
+      },
+      {
+        id: 102,
+        title:
+          "What is the difference between `let`, `const`, and `var` in JavaScript?",
+        description:
+          "<p>I'm new to modern JavaScript and I see these three ways to declare variables. When should I use each one? What are the scoping rules for them? An example would be very helpful!</p>",
+        tags: ["javascript", "es6", "variables"],
+        author: "bob",
+        votes: 22,
+        createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+        acceptedAnswerId: null,
+      },
+      {
+        id: 103,
+        title:
+          "How can I center a div both horizontally and vertically with CSS?",
+        description:
+          "<p>This seems like it should be simple, but I always struggle with it. I've tried using margins, positioning, and other tricks, but they don't always work. What is the most reliable, modern way to perfectly center an element using CSS Flexbox or Grid?</p>",
+        tags: ["css", "flexbox", "layout"],
+        author: "charlie",
+        votes: 30,
+        createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+        acceptedAnswerId: 201,
+      },
+      {
+        id: 104,
+        title: "Best way to fetch data in a React component?",
+        description:
+          "<p>What is the recommended way to fetch data from an API when a component mounts? Should I use the `useEffect` hook? Are there any libraries that make this easier, like SWR or React Query?</p>",
+        tags: ["react", "api", "hooks"],
+        author: "alice",
+        votes: 8,
+        createdAt: new Date(Date.now() - 10 * 60 * 1000).toISOString(),
+        acceptedAnswerId: null,
+      },
+    ];
+
+    const dummyAnswers = [
+      {
+        id: 201,
+        questionId: 103,
+        author: "alice",
+        votes: 18,
+        content:
+          "<p>Using Flexbox is the easiest way! Just apply these three properties to the parent container:</p><pre><code>.parent-container {\n  display: flex;\n  justify-content: center; /* Horizontal centering */\n  align-items: center;    /* Vertical centering */\n}</code></pre>",
+        createdAt: new Date(Date.now() - 20 * 60 * 60 * 1000).toISOString(),
+      },
+      {
+        id: 202,
+        questionId: 101,
+        author: "bob",
+        votes: 12,
+        content:
+          "<p>For most apps, React's built-in <strong>Context API</strong> is sufficient and easier to set up than Redux. You can create a context for your shared state and use a provider to wrap your component tree. Use Redux only when you have very complex state logic or need advanced middleware and developer tools.</p>",
+        createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+      },
+      {
+        id: 203,
+        questionId: 102,
+        author: "charlie",
+        votes: 25,
+        content:
+          "<ul><li>Use <code>const</code> by default.</li><li>Use <code>let</code> only when you know you need to reassign the variable.</li><li>Avoid using <code>var</code> in modern JavaScript due to its function-scoping and hoisting behavior, which can cause unexpected bugs.</li></ul>",
+        createdAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
+      },
+    ];
+
+    // Only load dummy data if there's no data already in localStorage
+    if (!localStorage.getItem("stackit_users")) {
+      localStorage.setItem("stackit_users", JSON.stringify(dummyUsers));
+      localStorage.setItem("stackit_questions", JSON.stringify(dummyQuestions));
+      localStorage.setItem("stackit_answers", JSON.stringify(dummyAnswers));
+    }
+  };
+
+  initDummyData();
+
+  // =================================================================================
   // THEME TOGGLE
   // This section handles the light/dark mode functionality.
   // =================================================================================
@@ -34,15 +158,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // DATABASE & STATE
   // =================================================================================
   let db = {
-    users: JSON.parse(localStorage.getItem("stackit_users")) || [
-      {
-        id: 1,
-        name: "Admin",
-        username: "admin",
-        contact: "admin@example.com",
-        password: "Password123!",
-      },
-    ],
+    users: JSON.parse(localStorage.getItem("stackit_users")) || [],
     questions: JSON.parse(localStorage.getItem("stackit_questions")) || [],
     answers: JSON.parse(localStorage.getItem("stackit_answers")) || [],
     votes: JSON.parse(localStorage.getItem("stackit_votes")) || [],
@@ -506,7 +622,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     listEl.addEventListener("click", (e) => {
       const voteBtn = e.target.closest(".home-vote-btn");
-      const card = e.target.closest(".question-card-enter");
+      const cardContent = e.target.closest(".flex-1");
 
       if (voteBtn) {
         if (!db.currentUser) {
@@ -544,7 +660,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
         saveDb();
         renderQuestions();
-      } else if (card) {
+      } else if (cardContent) {
+        const card = cardContent.closest(".question-card-enter");
         const questionId = parseInt(card.dataset.questionId);
         const question = db.questions.find((q) => q.id === questionId);
         if (question) {
@@ -562,19 +679,32 @@ document.addEventListener("DOMContentLoaded", () => {
   const initLoginPage = () => {
     document.getElementById("login-form").addEventListener("submit", (e) => {
       e.preventDefault();
-      const contact = document.getElementById("login-contact").value;
+      const contactInput = document.getElementById("login-contact");
+      const passwordInput = document.getElementById("login-password");
+
+      const contact = contactInput.value.trim();
+      const password = passwordInput.value.trim();
+
+      if (!contact || !password) {
+        showAlert("Please enter both email/phone and password.");
+        return;
+      }
+
       const user = db.users.find(
         (u) =>
-          u.contact === contact &&
-          u.password === document.getElementById("login-password").value
+          u.contact.toLowerCase() === contact.toLowerCase() &&
+          u.password === password
       );
+
       if (user) {
         db.currentUser = user;
         sessionStorage.setItem("stackit_currentUser", JSON.stringify(user));
         updateUI();
         showPage("home");
       } else {
-        showAlert("Invalid credentials.");
+        showAlert(
+          "Invalid credentials. Please check your email/phone and password."
+        );
       }
     });
   };
@@ -630,23 +760,35 @@ document.addEventListener("DOMContentLoaded", () => {
         );
         return;
       }
-      const username = document.getElementById("signup-username").value;
-      const contact = document.getElementById("signup-contact").value;
+      const username = document.getElementById("signup-username").value.trim();
+      const contact = document.getElementById("signup-contact").value.trim();
+      const name = document.getElementById("signup-name").value.trim();
 
-      if (db.users.some((u) => u.username === username)) {
+      if (!username || !contact || !name || !passwordInput.value) {
+        showAlert("Please fill out all fields.");
+        return;
+      }
+
+      if (
+        db.users.some(
+          (u) => u.username.toLowerCase() === username.toLowerCase()
+        )
+      ) {
         showAlert("Username already exists.");
         return;
       }
-      if (db.users.some((u) => u.contact === contact)) {
+      if (
+        db.users.some((u) => u.contact.toLowerCase() === contact.toLowerCase())
+      ) {
         showAlert("Email or phone already registered.");
         return;
       }
 
       const newUser = {
         id: Date.now(),
-        name: document.getElementById("signup-name").value,
-        username,
-        contact,
+        name: name,
+        username: username,
+        contact: contact,
         password: passwordInput.value,
       };
       db.users.push(newUser);

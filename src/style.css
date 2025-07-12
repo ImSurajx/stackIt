@@ -1,154 +1,154 @@
-        :root {
-            --bg-primary: #f9fafb;
-            --bg-secondary: #ffffff;
-            --text-primary: #1f2937;
-            --text-secondary: #6b7280;
-            --border-color: #e5e7eb;
-            --accent-color: #f97316;
-            /* Orange 500 */
-            --accent-text: #ffffff;
-        }
+:root {
+	--bg-primary: #f9fafb;
+	--bg-secondary: #ffffff;
+	--text-primary: #1f2937;
+	--text-secondary: #6b7280;
+	--border-color: #e5e7eb;
+	--accent-color: #f97316;
+	/* Orange 500 */
+	--accent-text: #ffffff;
+}
 
-        html.dark {
-            --bg-primary: #000000;
-            --bg-secondary: #000000;
-            --text-primary: #ffffff;
-            --text-secondary: #a0a0a0;
-            --border-color: #27272a;
-            --accent-color: #fb923c;
-            /* Orange 400 */
-            --accent-text: #000000;
-        }
+html.dark {
+	--bg-primary: #000000;
+	--bg-secondary: #000000;
+	--text-primary: #ffffff;
+	--text-secondary: #a0a0a0;
+	--border-color: #27272a;
+	--accent-color: #fb923c;
+	/* Orange 400 */
+	--accent-text: #000000;
+}
 
-        body {
-            font-family: 'Poppins', sans-serif;
-            background-color: var(--bg-primary);
-            color: var(--text-primary);
-            transition: background-color 0.3s ease, color 0.3s ease;
-        }
+body {
+	font-family: 'Poppins', sans-serif;
+	background-color: var(--bg-primary);
+	color: var(--text-primary);
+	transition: background-color 0.3s ease, color 0.3s ease;
+}
 
-        /* Page transition styles */
-        .page {
-            display: none;
-            animation: fadeIn 0.5s ease-in-out;
-        }
+/* Page transition styles */
+.page {
+	display: none;
+	animation: fadeIn 0.5s ease-in-out;
+}
 
-        .page.active {
-            display: block;
-        }
+.page.active {
+	display: block;
+}
 
-        .modal {
-            display: none;
-        }
+.modal {
+	display: none;
+}
 
-        .modal.active {
-            display: flex;
-        }
+.modal.active {
+	display: flex;
+}
 
-        .modal-content {
-            animation: popIn 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
-        }
+.modal-content {
+	animation: popIn 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+}
 
-        /* Custom styles for the Quill editor */
-        .ql-toolbar {
-            border-color: var(--border-color) !important;
-            background-color: var(--bg-secondary);
-        }
+/* Custom styles for the Quill editor */
+.ql-toolbar {
+	border-color: var(--border-color) !important;
+	background-color: var(--bg-secondary);
+}
 
-        .ql-container {
-            border-color: var(--border-color) !important;
-            color: var(--text-primary);
-            background-color: var(--bg-secondary);
-        }
+.ql-container {
+	border-color: var(--border-color) !important;
+	color: var(--text-primary);
+	background-color: var(--bg-secondary);
+}
 
-        .ql-editor.ql-blank::before {
-            color: var(--text-secondary);
-        }
+.ql-editor.ql-blank::before {
+	color: var(--text-secondary);
+}
 
-        .ql-snow .ql-stroke {
-            stroke: var(--text-primary);
-        }
+.ql-snow .ql-stroke {
+	stroke: var(--text-primary);
+}
 
-        .ql-snow .ql-picker-label {
-            color: var(--text-primary);
-        }
+.ql-snow .ql-picker-label {
+	color: var(--text-primary);
+}
 
-        .ql-snow .ql-picker-options {
-            background-color: var(--bg-secondary);
-            border-color: var(--border-color);
-        }
+.ql-snow .ql-picker-options {
+	background-color: var(--bg-secondary);
+	border-color: var(--border-color);
+}
 
-        .tag-item {
-            background-color: #ffedd5;
-            color: #9a3412;
-        }
+.tag-item {
+	background-color: #ffedd5;
+	color: #9a3412;
+}
 
-        html.dark .tag-item {
-            background-color: #7c2d12;
-            color: #fdba74;
-        }
+html.dark .tag-item {
+	background-color: #7c2d12;
+	color: #fdba74;
+}
 
-        .vote-btn.voted-up {
-            color: var(--accent-color);
-        }
+.vote-btn.voted-up {
+	color: var(--accent-color);
+}
 
-        .vote-btn.voted-down {
-            color: #ef4444;
-        }
+.vote-btn.voted-down {
+	color: #ef4444;
+}
 
-        .accept-btn.accepted {
-            color: #22c55e;
-            cursor: default;
-        }
+.accept-btn.accepted {
+	color: #22c55e;
+	cursor: default;
+}
 
-        /* Password strength styles */
-        .strength-meter {
-            height: 4px;
-            background: #e5e7eb;
-            border-radius: 2px;
-        }
+/* Password strength styles */
+.strength-meter {
+	height: 4px;
+	background: #e5e7eb;
+	border-radius: 2px;
+}
 
-        html.dark .strength-meter {
-            background: #374151;
-        }
+html.dark .strength-meter {
+	background: #374151;
+}
 
-        .strength-meter div {
-            height: 100%;
-            transition: width 0.3s ease;
-            border-radius: 2px;
-        }
+.strength-meter div {
+	height: 100%;
+	transition: width 0.3s ease;
+	border-radius: 2px;
+}
 
-        .strength-text {
-            font-size: 0.8rem;
-        }
+.strength-text {
+	font-size: 0.8rem;
+}
 
-        /* Animation Keyframes */
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
+/* Animation Keyframes */
+@keyframes fadeIn {
+	from {
+		opacity: 0;
+		transform: translateY(10px);
+	}
 
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
 
-        @keyframes popIn {
-            from {
-                opacity: 0;
-                transform: scale(0.9);
-            }
+@keyframes popIn {
+	from {
+		opacity: 0;
+		transform: scale(0.9);
+	}
 
-            to {
-                opacity: 1;
-                transform: scale(1);
-            }
-        }
+	to {
+		opacity: 1;
+		transform: scale(1);
+	}
+}
 
-        .question-card-enter {
-            opacity: 0;
-            transform: translateY(20px);
-            animation: fadeIn 0.5s ease-out forwards;
-        }
+.question-card-enter {
+	opacity: 0;
+	transform: translateY(20px);
+	animation: fadeIn 0.5s ease-out forwards;
+}
