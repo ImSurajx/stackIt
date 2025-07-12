@@ -337,4 +337,46 @@ document.addEventListener("DOMContentLoaded", () => {
   alertModal.addEventListener("click", () =>
     alertModal.classList.remove("active")
   );
+
+  // =================================================================================
+  // AUTHENTICATION & NAVIGATION
+  // =================================================================================
+  const authContainer = document.getElementById("auth-container");
+
+  const updateUI = () => {
+    authContainer.innerHTML = "";
+    if (db.currentUser) {
+      authContainer.innerHTML = `<span class="hidden sm:block font-semibold">Welcome, ${db.currentUser.name}</span><div class="relative" id="notification-container"></div><button id="logout-btn" class="hover:text-orange-500 text-sm sm:text-base">Logout</button>`;
+      initNotifications();
+    } else {
+      authContainer.innerHTML = `<button class="hover:text-orange-500 nav-link text-sm sm:text-base" data-page="login">Login</button><button class="text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg font-semibold transition-transform hover:scale-105 nav-link text-sm sm:text-base" data-page="signup" style="background-color: var(--accent-color); color: var(--accent-text);">Sign Up</button>`;
+    }
+    authContainer.appendChild(themeToggleBtn);
+  };
+
+  document.body.addEventListener("click", (e) => {
+    if (e.target.id === "logout-btn") {
+      db.currentUser = null;
+      sessionStorage.removeItem("stackit_currentUser");
+      updateUI();
+      showPage("home");
+    }
+    const navLink = e.target.closest(".nav-link");
+    if (navLink) {
+      e.preventDefault();
+      const page = navLink.dataset.page;
+      if (page === "ask" && !db.currentUser) {
+        showAlert("Please login to ask a question.");
+        showPage("login");
+      } else {
+        showPage(page);
+      }
+    }
+    const backBtn = e.target.closest("#back-btn");
+    if (backBtn) history.back();
+
+    const forwardBtn = e.target.closest("#forward-btn");
+    if (forwardBtn) history.forward();
+  });
+
 });
