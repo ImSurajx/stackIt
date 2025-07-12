@@ -14,6 +14,16 @@
 
 ---
 
+## 📹 Project Demo Video
+
+🎥 Watch our team walk through **StackIt** and explain how it works:
+
+👉 [Click to Watch the Demo on Drive](https://drive.google.com/file/d/11moBaLfr5QFmVKx6fdljUPFrZL2GW6ju/view)
+
+> _Presented by the team members of **Quantum Quacks** as part of **Odoo Hackathon 2025**._
+
+---
+
 ## 📝 Overview
 
 **StackIt** is a minimalistic, frontend-only question-and-answer platform designed for structured knowledge sharing. It simulates the core functionality of platforms like Stack Overflow, allowing users to ask questions, post answers, vote, and stay updated — all within a clean, distraction-free interface.
