@@ -379,4 +379,472 @@ document.addEventListener("DOMContentLoaded", () => {
     if (forwardBtn) history.forward();
   });
 
+  // =================================================================================
+  // PAGE INITIALIZERS
+  // =================================================================================
+
+  const renderQuestions = () => {
+    const listEl = document.getElementById("question-list");
+    if (!listEl) return;
+    const searchInput = document.getElementById("search-input");
+    const tagFilter = document.getElementById("tag-filter");
+    const sortFilter = document.getElementById("sort-filter");
+    const statusFilter = document.getElementById("status-filter");
+
+    const searchTerm = searchInput.value.toLowerCase();
+    const selectedTag = tagFilter.value;
+    const sortBy = sortFilter.value;
+    const status = statusFilter.value;
+
+    let filteredQuestions = [...db.questions];
+
+    if (searchTerm) {
+      filteredQuestions = filteredQuestions.filter((q) =>
+        q.title.toLowerCase().includes(searchTerm)
+      );
+    }
+    if (selectedTag !== "all") {
+      filteredQuestions = filteredQuestions.filter((q) =>
+        q.tags.includes(selectedTag)
+      );
+    }
+    if (status === "answered") {
+      filteredQuestions = filteredQuestions.filter((q) => q.acceptedAnswerId);
+    } else if (status === "unanswered") {
+      filteredQuestions = filteredQuestions.filter((q) => !q.acceptedAnswerId);
+    }
+
+    if (sortBy === "newest") {
+      filteredQuestions.sort(
+        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+      );
+    } else if (sortBy === "oldest") {
+      filteredQuestions.sort(
+        (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
+      );
+    } else if (sortBy === "votes") {
+      filteredQuestions.sort((a, b) => (b.votes || 0) - (a.votes || 0));
+    }
+
+    listEl.innerHTML = "";
+    filteredQuestions.forEach((q, index) => {
+      const card = document.createElement("div");
+      card.className =
+        "p-4 sm:p-6 rounded-xl border transition-all hover:shadow-lg hover:-translate-y-1 question-card-enter";
+      card.style.backgroundColor = "var(--bg-secondary)";
+      card.style.borderColor = "var(--border-color)";
+      card.style.animationDelay = `${index * 50}ms`;
+      card.dataset.questionId = q.id;
+
+      const questionVote = db.currentUser
+        ? db.questionVotes.find(
+            (v) => v.userId === db.currentUser.id && v.questionId === q.id
+          )
+        : null;
+
+      card.innerHTML = `
+                    <div class="flex items-start gap-4">
+                        <div class="flex-shrink-0 flex flex-col items-center w-12 text-center" style="color: var(--text-secondary);">
+                            <button class="home-vote-btn vote-btn p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 ${
+                              questionVote?.type === "up" ? "voted-up" : ""
+                            }" data-vote="up" data-question-id="${q.id}">
+                                <span class="text-xl">▲</span>
+                            </button>
+                            <span class="font-bold text-base sm:text-lg" style="color: var(--text-primary);">${
+                              q.votes || 0
+                            }</span>
+                            <button class="home-vote-btn vote-btn p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 ${
+                              questionVote?.type === "down" ? "voted-down" : ""
+                            }" data-vote="down" data-question-id="${q.id}">
+                                <span class="text-xl">▼</span>
+                            </button>
+                        </div>
+                        <div class="flex-1 cursor-pointer">
+                            <h3 class="text-base sm:text-lg font-semibold mb-2 hover:text-orange-500">${
+                              q.title
+                            }</h3>
+                            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                                <div class="text-xs sm:text-sm" style="color: var(--text-secondary);">
+                                    by <strong>${
+                                      q.author
+                                    }</strong> • ${formatTimeAgo(q.createdAt)}
+                                </div>
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    ${q.tags
+                                      .map(
+                                        (t) =>
+                                          `<span class="tag-item px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-xs font-medium">${t}</span>`
+                                      )
+                                      .join("")}
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
+      listEl.appendChild(card);
+    });
+  };
+
+  const initHomePage = () => {
+    const searchInput = document.getElementById("search-input");
+    const tagFilter = document.getElementById("tag-filter");
+    const sortFilter = document.getElementById("sort-filter");
+    const statusFilter = document.getElementById("status-filter");
+    const listEl = document.getElementById("question-list");
+
+    const allTags = new Set(db.questions.flatMap((q) => q.tags));
+    allTags.forEach((tag) => {
+      const option = document.createElement("option");
+      option.value = tag;
+      option.textContent = tag;
+      tagFilter.appendChild(option);
+    });
+
+    [searchInput, tagFilter, sortFilter, statusFilter].forEach((el) => {
+      el.addEventListener("input", renderQuestions);
+      el.addEventListener("change", renderQuestions);
+    });
+
+    listEl.addEventListener("click", (e) => {
+      const voteBtn = e.target.closest(".home-vote-btn");
+      const card = e.target.closest(".question-card-enter");
+
+      if (voteBtn) {
+        if (!db.currentUser) {
+          showAlert("Please login to vote.");
+          return;
+        }
+
+        const questionId = parseInt(voteBtn.dataset.questionId);
+        const voteType = voteBtn.dataset.vote;
+        const questionToVote = db.questions.find((q) => q.id === questionId);
+
+        if (!questionToVote) return;
+
+        const existingVote = db.questionVotes.find(
+          (v) => v.userId === db.currentUser.id && v.questionId === questionId
+        );
+
+        if (existingVote) {
+          questionToVote.votes -= existingVote.type === "up" ? 1 : -1;
+          db.questionVotes = db.questionVotes.filter(
+            (v) =>
+              !(v.userId === db.currentUser.id && v.questionId === questionId)
+          );
+        }
+
+        if (!existingVote || existingVote.type !== voteType) {
+          questionToVote.votes += voteType === "up" ? 1 : -1;
+          db.questionVotes.push({
+            id: Date.now(),
+            userId: db.currentUser.id,
+            questionId,
+            type: voteType,
+          });
+        }
+
+        saveDb();
+        renderQuestions();
+      } else if (card) {
+        const questionId = parseInt(card.dataset.questionId);
+        const question = db.questions.find((q) => q.id === questionId);
+        if (question) {
+          const answers = db.answers.filter(
+            (a) => a.questionId === question.id
+          );
+          showPage("detail", [question, answers]);
+        }
+      }
+    });
+
+    renderQuestions();
+  };
+
+  const initLoginPage = () => {
+    document.getElementById("login-form").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const contact = document.getElementById("login-contact").value;
+      const user = db.users.find(
+        (u) =>
+          u.contact === contact &&
+          u.password === document.getElementById("login-password").value
+      );
+      if (user) {
+        db.currentUser = user;
+        sessionStorage.setItem("stackit_currentUser", JSON.stringify(user));
+        updateUI();
+        showPage("home");
+      } else {
+        showAlert("Invalid credentials.");
+      }
+    });
+  };
+
+  const checkPasswordStrength = (passwordInput, strengthBar, strengthText) => {
+    const pass = passwordInput.value;
+    let score = 0;
+    if (pass.length >= 8) score++;
+    if (/\d/.test(pass)) score++;
+    if (/[^A-Za-z0-9]/.test(pass)) score++;
+
+    let color = "bg-red-500";
+    let text = "Weak";
+    if (score === 1) {
+      text = "Weak (needs number & special char)";
+    }
+    if (score === 2) {
+      color = "bg-yellow-500";
+      text = "Medium (needs one more type)";
+    }
+    if (score === 3) {
+      color = "bg-green-500";
+      text = "Strong";
+    }
+    if (pass.length < 8) {
+      text = "Weak (at least 8 characters)";
+      score = 0;
+    }
+    if (pass.length === 0) {
+      text = "";
+      score = 0;
+    }
+
+    strengthBar.style.width = (score / 3) * 100 + "%";
+    strengthBar.className = color;
+    strengthText.textContent = text;
+    return score;
+  };
+
+  const initSignupPage = () => {
+    const form = document.getElementById("signup-form");
+    const passwordInput = document.getElementById("signup-password");
+    const strengthBar = document.getElementById("strength-bar");
+    const strengthText = document.getElementById("strength-text");
+    passwordInput.addEventListener("input", () =>
+      checkPasswordStrength(passwordInput, strengthBar, strengthText)
+    );
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      if (checkPasswordStrength(passwordInput, strengthBar, strengthText) < 3) {
+        showAlert(
+          "Please use a stronger password (at least 8 characters, one number, one special character)."
+        );
+        return;
+      }
+      const username = document.getElementById("signup-username").value;
+      const contact = document.getElementById("signup-contact").value;
+
+      if (db.users.some((u) => u.username === username)) {
+        showAlert("Username already exists.");
+        return;
+      }
+      if (db.users.some((u) => u.contact === contact)) {
+        showAlert("Email or phone already registered.");
+        return;
+      }
+
+      const newUser = {
+        id: Date.now(),
+        name: document.getElementById("signup-name").value,
+        username,
+        contact,
+        password: passwordInput.value,
+      };
+      db.users.push(newUser);
+      saveDb();
+      db.currentUser = newUser;
+      sessionStorage.setItem("stackit_currentUser", JSON.stringify(newUser));
+      updateUI();
+      showPage("home");
+    });
+  };
+
+  const initAskPage = () => {
+    const quill = new Quill("#editor-container", {
+      modules: {
+        toolbar: [
+          [{ header: [1, 2, 3, false] }],
+          ["bold", "italic", "strike"],
+          ["link", "image"],
+          [{ list: "ordered" }, { list: "bullet" }],
+          [{ align: [] }],
+          ["clean"],
+        ],
+      },
+      theme: "snow",
+      placeholder: "Write your question details here...",
+    });
+    const tagsContainer = document.getElementById("tags-container");
+    const tagsInput = document.getElementById("question-tags-input");
+    let currentTags = [];
+
+    const renderTags = () => {
+      tagsContainer.querySelectorAll("span").forEach((t) => t.remove());
+      for (const tag of currentTags) {
+        const tagEl = document.createElement("span");
+        tagEl.className =
+          "tag-item p-1 px-2.5 rounded-full text-sm font-medium";
+        tagEl.innerHTML = `<span>${tag}</span><button type="button" class="ml-1.5" data-tag-name="${tag}">&times;</button>`;
+        tagsContainer.insertBefore(tagEl, tagsInput);
+      }
+    };
+
+    tagsInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === ",") {
+        e.preventDefault();
+        const newTag = tagsInput.value.trim();
+        if (newTag && !currentTags.includes(newTag) && currentTags.length < 5) {
+          currentTags.push(newTag);
+          renderTags();
+        }
+        tagsInput.value = "";
+      }
+    });
+    tagsContainer.addEventListener("click", (e) => {
+      if (e.target.tagName === "BUTTON" && e.target.dataset.tagName) {
+        currentTags = currentTags.filter((t) => t !== e.target.dataset.tagName);
+        renderTags();
+      }
+    });
+
+    document
+      .getElementById("ask-question-form")
+      .addEventListener("submit", (e) => {
+        e.preventDefault();
+        const title = document.getElementById("question-title").value;
+        const descriptionHTML = quill.root.innerHTML;
+        if (!title.trim()) {
+          showAlert("Please enter a title.");
+          return;
+        }
+        if (quill.getLength() < 15) {
+          showAlert("Please provide more details.");
+          return;
+        }
+        if (currentTags.length === 0) {
+          showAlert("Please add at least one tag.");
+          return;
+        }
+        db.questions.push({
+          id: Date.now(),
+          title,
+          description: descriptionHTML,
+          tags: currentTags,
+          author: db.currentUser.username,
+          votes: 0,
+          createdAt: new Date().toISOString(),
+        });
+        saveDb();
+        showPage("home");
+      });
+  };
+
+  const initDetailPage = (question, answers) => {
+    const answerContainer = document.getElementById("answer-form-container");
+    if (db.currentUser) {
+      answerContainer.innerHTML = `<h3 class="text-xl font-bold mb-4">Your Answer</h3><form id="answer-form"><div id="answer-editor-container"></div><button type="submit" class="mt-4 text-white px-6 py-2 rounded-lg font-semibold transition-transform hover:scale-105" style="background-color: var(--accent-color); color: var(--accent-text);">Post Answer</button></form>`;
+      const answerQuill = new Quill("#answer-editor-container", {
+        theme: "snow",
+        placeholder: "Write your answer here...",
+      });
+      document.getElementById("answer-form").addEventListener("submit", (e) => {
+        e.preventDefault();
+        if (answerQuill.getLength() < 2) return;
+        db.answers.push({
+          id: Date.now(),
+          questionId: question.id,
+          author: db.currentUser.username,
+          votes: 0,
+          content: answerQuill.root.innerHTML,
+          createdAt: new Date().toISOString(),
+        });
+        addNotification(
+          `Someone answered your question: "${question.title.substring(
+            0,
+            20
+          )}..."`,
+          question.author,
+          "new_answer",
+          question.id
+        );
+        saveDb();
+        showPage("detail", [
+          db.questions.find((q) => q.id === question.id),
+          db.answers.filter((a) => a.questionId === question.id),
+        ]);
+      });
+    } else {
+      answerContainer.innerHTML = `<p>Please <a href="#" class="font-semibold nav-link" data-page="login" style="color: var(--accent-color);">login</a> to post an answer.</p>`;
+    }
+
+    document.getElementById("answer-list").addEventListener("click", (e) => {
+      const btn = e.target.closest("button");
+      if (!btn || !db.currentUser) {
+        if (btn) showAlert("Please login to vote or accept answers.");
+        return;
+      }
+      const answerId = parseInt(btn.dataset.acceptId || btn.dataset.answerId);
+      if (!answerId) return;
+      const answer = db.answers.find((a) => a.id === answerId);
+      if (btn.dataset.vote) {
+        const existingVote = db.votes.find(
+          (v) => v.userId === db.currentUser.id && v.answerId === answerId
+        );
+        if (existingVote) {
+          answer.votes -= existingVote.type === "up" ? 1 : -1;
+          db.votes = db.votes.filter((v) => v.id !== existingVote.id);
+        }
+        if (!existingVote || existingVote.type !== btn.dataset.vote) {
+          answer.votes += btn.dataset.vote === "up" ? 1 : -1;
+          db.votes.push({
+            id: Date.now(),
+            userId: db.currentUser.id,
+            answerId,
+            type: btn.dataset.vote,
+          });
+        }
+      }
+      if (btn.dataset.acceptId) {
+        const q = db.questions.find(
+          (q) => q.id === parseInt(btn.dataset.questionId)
+        );
+        if (q.author === db.currentUser.username) {
+          q.acceptedAnswerId =
+            q.acceptedAnswerId === answerId ? null : answerId;
+        }
+      }
+      saveDb();
+      showPage("detail", [
+        db.questions.find((q) => q.id === question.id),
+        db.answers.filter((a) => a.questionId === question.id),
+      ]);
+    });
+
+    const deleteBtn = document.getElementById("delete-question-btn");
+    if (deleteBtn) {
+      deleteBtn.addEventListener("click", (e) => {
+        const questionId = parseInt(e.currentTarget.dataset.questionId);
+        showConfirm(
+          "Are you sure you want to delete this question? This will also delete all its answers and cannot be undone.",
+          () => {
+            const answersToDelete = db.answers.filter(
+              (a) => a.questionId === questionId
+            );
+            const answerIds = answersToDelete.map((a) => a.id);
+            db.questions = db.questions.filter((q) => q.id !== questionId);
+            db.answers = db.answers.filter((a) => a.questionId !== questionId);
+            db.votes = db.votes.filter((v) => !answerIds.includes(v.answerId));
+            db.questionVotes = db.questionVotes.filter(
+              (v) => v.questionId !== questionId
+            );
+            db.notifications = db.notifications.filter(
+              (n) => n.referenceId !== questionId
+            );
+            saveDb();
+            showAlert("Question deleted successfully.");
+            showPage("home");
+          }
+        );
+      });
+    }
+  };
 });
